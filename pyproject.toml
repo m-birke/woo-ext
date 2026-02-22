@@ -11,7 +11,12 @@ requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
 keywords = [
-  # TODO
+  "woo",
+  "woocommerce",
+  "client",
+  "extension",
+  "REST",
+  "API",
 ]
 authors = [
   { name = "m-birke", email = "wesci@web.de" },
@@ -30,7 +35,8 @@ classifiers = [
   "Operating System :: POSIX :: Linux",
 ]
 dependencies = [
-  # TODO
+  "tenacity>=9.1,<10",
+  "woocommerce>=3.0.0,<4",
 ]
 
 [project.urls]
@@ -134,10 +140,8 @@ ban-relative-imports = "all"
 # Tests can use magic values, assertions, and relative imports
 "tests/**/*" = ["PLR2004", "S101", "TID252"]
 
-#[[tool.mypy.overrides]]
-#module = [
-#]
-#follow_untyped_imports = true
+[tool.mypy]
+follow_untyped_imports = true
 #ignore_missing_imports = true
 
 [tool.coverage.run]
