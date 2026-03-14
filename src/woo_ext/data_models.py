@@ -1,4 +1,5 @@
 import json
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel, field_validator
@@ -27,3 +28,27 @@ class WooMetaDatum(BaseModel):
             return v
         msg = f"Field 'value' for {self} of type {type(v)} is not JSON serializable"
         raise ValueError(msg)
+
+
+class WooOrderStatus(Enum):
+    PENDING = "pending"
+    PROCESSING = "processing"
+    ONHOLD = "on-hold"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    REFUNDED = "refunded"
+    FAILED = "failed"
+    TRASH = "trash"
+
+
+class WooOrderCondensed(BaseModel):
+    system: str = "woocommerce"
+    order_id: int
+    status: WooOrderStatus
+    date_paid: str
+    payment_method: str
+    product_id: int | None
+    mail_address: str
+    coupon: str | None
+
+    model_config = {"extra": "allow"}
