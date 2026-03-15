@@ -23,10 +23,10 @@ class WooMetaDatum(BaseModel):
     value: Any
 
     @field_validator("value")
-    def validate_value(self, v):
+    def validate_value(cls, v):  # noqa: N805
         if is_json_serializable(value=v):
             return v
-        msg = f"Field 'value' for {self} of type {type(v)} is not JSON serializable"
+        msg = f"Field 'value' for {cls} of type {type(v)} is not JSON serializable"
         raise ValueError(msg)
 
 
