@@ -14,8 +14,9 @@ def is_json_serializable(value: Any) -> bool:
 
 
 class WooMetaDatum(BaseModel):
-    """
-    value must be JSON serializable
+    """Models an entry in the woocommerce 'meta_data' field
+
+    'value' must be JSON serializable
     """
 
     id: int | None = None
