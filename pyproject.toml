@@ -53,7 +53,7 @@ build.targets.wheel.packages = ["src/woo_ext/"]
 
 [tool.hatch.version]
 source = "vcs"
-raw-options = {version_scheme = "only-version", local_scheme = "node-and-timestamp"}
+raw-options = {version_scheme = "only-version", local_scheme = "no-local-version"}
 
 [tool.hatch.envs.default]
 path = "./.hatch/default"
