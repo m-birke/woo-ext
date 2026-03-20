@@ -1,6 +1,6 @@
 from woocommerce import API
 
-from woo_ext.data_models import WooMetaDatum
+from woo_ext.data_models import WooMetaDatum, WooOrderCondensed, WooOrderPseudonomyzed
 
 
 def parse_woo_order_meta_data(meta_data: list[dict]) -> list[WooMetaDatum]:
@@ -39,58 +39,36 @@ def delete_order_meta_data(wc_client: API, order_id: int, meta_data_key: str) ->
     response.raise_for_status()
 
 
-def pseudonymize_order_data(order: dict) -> dict:
+def pseudonymize_order_data(order: WooOrderCondensed) -> WooOrderPseudonomyzed:
     """Pseudonymizes the order data by only keeping the order_id and removing all other
     personally identifiable information (PII)"""
-    pseudonymized_order = {"order_id": ""}
-    if not order:
-        return pseudonymized_order
-
-    pseudonymized_order["order_id"] = order.get("order_id", "")
-
-    return pseudonymized_order
+    return WooOrderPseudonomyzed(order_id=order.order_id)
 
 
-def condense_order_data(order: dict, metadata_keys: list[str] | None = None) -> dict:
+def condense_order_data(order: dict) -> WooOrderCondensed:
     """Extracts the important meta data out of a woocommerce order item
 
-    At the moment:
-
-    * order_id
-    * mail_addr
-    * date_paid
-    * payment_method
-    * product_id
-    * status
-    * coupon [optional]
-    * Additional keys from the order's meta_data section
-
-    Additionally adds a field named 'system' with value 'woocommerce' for better traceability.
-
+    Additional keys from the order's meta_data section
     """
 
-    order_meta = {"order_id": order["id"]}
-    order_meta["date_paid"] = order["date_paid"]
-    order_meta["mail_addr"] = order["billing"]["email"]
-    order_meta["payment_method"] = order["payment_method"]
-    order_meta["status"] = order["status"]
-    order_meta["system"] = "woocommerce"
     try:
-        order_meta["product_id"] = order["line_items"][0]["product_id"]
+        # TODO handle more than one product
+        product_id = order["line_items"][0]["product_id"]
     except IndexError:
-        order_meta["product_id"] = None
+        product_id = None
 
     if order["coupon_lines"]:
-        # TODO what if there are more than one coupons ?
-        order_meta["coupon"] = order["coupon_lines"][0]["code"]
+        # TODO handle more than one coupons
+        coupon = order["coupon_lines"][0]["code"]
+    else:
+        coupon = None
 
-    if not metadata_keys:
-        return order_meta
-
-    wc_order_metadata_list: list[dict] = order["meta_data"]
-    for el in wc_order_metadata_list:
-        for key in metadata_keys:
-            if el.get("key") == key:
-                order_meta[key] = el["value"]
-
-    return order_meta
+    return WooOrderCondensed(
+        order_id=order["id"],
+        status=order["status"],
+        date_paid=order["date_paid"],
+        payment_method=order["payment_method"],
+        product_id=product_id,
+        mail_address=order["billing"]["email"],
+        coupon=coupon,
+    )

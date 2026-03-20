@@ -45,11 +45,13 @@ class WooOrderStatus(Enum):
 class WooOrderCondensed(BaseModel):
     system: str = "woocommerce"
     order_id: int
-    status: WooOrderStatus
-    date_paid: str
-    payment_method: str
+    status: WooOrderStatus | None | str  # str for custom status
+    date_paid: str | None
+    payment_method: str | None
     product_id: int | None
-    mail_address: str
+    mail_address: str | None
     coupon: str | None
 
-    model_config = {"extra": "allow"}
+
+class WooOrderPseudonomyzed(BaseModel):
+    order_id: int
