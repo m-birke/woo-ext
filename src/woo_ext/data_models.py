@@ -42,13 +42,20 @@ class WooOrderStatus(Enum):
     TRASH = "trash"
 
 
+class WooLineItem(BaseModel):
+    product_id: int
+    quantity: int
+    name: str | None = None
+    price: float | None = None
+
+
 class WooOrderCondensed(BaseModel):
     system: str = "woocommerce"
     order_id: int
     status: WooOrderStatus | None | str  # str for custom status
     date_paid: str | None
     payment_method: str | None
-    product_id: int | None
+    line_items: list[WooLineItem] | None
     mail_address: str | None
     coupon: str | None
 

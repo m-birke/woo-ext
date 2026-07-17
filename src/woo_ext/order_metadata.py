@@ -1,6 +1,11 @@
 from woocommerce import API
 
-from woo_ext.data_models import WooMetaDatum, WooOrderCondensed, WooOrderPseudonomyzed
+from woo_ext.data_models import (
+    WooLineItem,
+    WooMetaDatum,
+    WooOrderCondensed,
+    WooOrderPseudonomyzed,
+)
 
 
 def parse_woo_order_meta_data(meta_data: list[dict]) -> list[WooMetaDatum]:
@@ -45,17 +50,48 @@ def pseudonymize_order_data(order: WooOrderCondensed) -> WooOrderPseudonomyzed:
     return WooOrderPseudonomyzed(order_id=order.order_id)
 
 
+def parse_woo_line_items(line_items: list[dict]) -> list[WooLineItem]:
+    """Convert WooCommerce `line_items` dicts into a list of `WooLineItem` models.
+
+    - Skips entries without a valid `product_id`/`quantity`.
+    - Coerces numeric fields when possible.
+    """
+    parsed: list[WooLineItem] = []
+    for el in line_items or []:
+        product_id = el.get("product_id")
+        quantity = el.get("quantity", 0)
+
+        if product_id is None:
+            continue
+
+        product_id = int(product_id)
+
+        try:
+            quantity = int(quantity)
+        except Exception:
+            quantity = 0
+
+        name = el.get("name")
+
+        price = el.get("price")
+        if price is not None and price != "":
+            try:
+                price = float(price)
+            except Exception:
+                price = None
+
+        parsed.append(WooLineItem(product_id=product_id, quantity=quantity, name=name, price=price))
+
+    return parsed
+
+
 def condense_order_data(order: dict) -> WooOrderCondensed:
     """Extracts the important meta data out of a woocommerce order item
 
     Additional keys from the order's meta_data section
     """
 
-    try:
-        # TODO handle more than one product
-        product_id = order["line_items"][0]["product_id"]
-    except IndexError:
-        product_id = None
+    line_items_parsed = parse_woo_line_items(order.get("line_items", []))
 
     if order["coupon_lines"]:
         # TODO handle more than one coupons
@@ -68,7 +104,7 @@ def condense_order_data(order: dict) -> WooOrderCondensed:
         status=order["status"],
         date_paid=order["date_paid"],
         payment_method=order["payment_method"],
-        product_id=product_id,
+        line_items=line_items_parsed,
         mail_address=order["billing"]["email"],
         coupon=coupon,
     )
