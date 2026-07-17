@@ -1,16 +1,25 @@
 from woocommerce import API
 
 
-def check_line_items(order: dict) -> bool:  # TODO make no line items a parameter
-    """Checks whether exactly 1 line item with quantity 1 is present in order
+def check_number_of_line_items(order: dict, expected_count: int = 1) -> bool:
+    """Checks whether the specified number of line items are present in the order
 
     If yes returns True, else False
     """
 
-    if len(order["line_items"]) != 1:
+    if len(order["line_items"]) != expected_count:
         return False
 
-    if order["line_items"][0]["quantity"] != 1:
+    return True
+
+
+def check_item_quantity(order: dict, item_idx: int = 0, expected_quantity: int = 1) -> bool:
+    """Checks whether the specified quantity of a specific item is present in the order
+
+    If yes returns True, else False
+    """
+
+    if order["line_items"][item_idx]["quantity"] != expected_quantity:
         return False
 
     return True
