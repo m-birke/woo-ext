@@ -11,6 +11,8 @@
 
 Extended functions for woocommerce client
 
+[Woo API Docs](https://woocommerce.github.io/woocommerce-rest-api-docs/#introduction)
+
 ## Table of Contents
 
 - [Usage](#usage)

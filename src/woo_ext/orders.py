@@ -1,5 +1,37 @@
 from woocommerce import API
 
+from woo_ext.data_models import WooOrderStatus
+
+
+def set_order_status(wc_client: API, order_id: int, new_status: WooOrderStatus) -> None:
+    """Sets the order status of an order to a new status
+
+    :param wc_client: initialized woocommerce API
+    :param order_id: id of the order to be updated
+    :param new_status: new status for the order, see WooOrderStatus for possible values
+    """
+    if not new_status:
+        msg = "To set the order status, 'new_status' must have a valid value"
+        raise ValueError(msg)
+
+    payload = {"status": new_status.value}
+    response = wc_client.put(f"orders/{order_id}", payload)
+    response.raise_for_status()
+
+
+def get_orders_by_status(wc_client: API, order_status: WooOrderStatus) -> list[dict]:
+    """View all the orders with a specific status
+
+    :param wc_client: initialized woocommerce API
+    :param order_status: status of the orders to be fetched, see WooOrderStatus for possible values
+    """
+    if not order_status:
+        msg = "To get the orders by status, 'order_status' must have a valid value"
+        raise ValueError(msg)
+
+    filtered_orders = get_orders_from_all_pages(wc_client, filter_str=f"&status={order_status.value}")
+    return filtered_orders
+
 
 def check_number_of_line_items(order: dict, expected_count: int = 1) -> bool:
     """Checks whether the specified number of line items are present in the order
