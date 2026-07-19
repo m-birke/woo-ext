@@ -1,4 +1,6 @@
+import datetime
 import math
+from datetime import timedelta
 
 from woocommerce import API
 
@@ -57,6 +59,35 @@ def get_orders_by_status(wc_client: API, order_status: WooOrderStatus, past_x_or
         page_number += 1
 
     return orders
+
+
+def get_paid_orders_by_status_within(wc_client: API, order_status: WooOrderStatus, past: timedelta) -> list[dict]:
+    """Return paid orders with a given status within a past time range.
+
+    The caller must supply a ``past`` timedelta (e.g. ``timedelta(days=30)``).
+
+    This function builds an ISO8601 ``after`` timestamp (UTC), calls
+    ``get_paid_orders_after`` to retrieve paid orders after that time, and then
+    filters those orders to the requested ``order_status``.
+    """
+    if not order_status:
+        msg = "To get the orders by status, 'order_status' must have a valid value"
+        raise ValueError(msg)
+
+    if not past or not isinstance(past, timedelta):
+        msg = "'past' must be a positive datetime.timedelta"
+        raise ValueError(msg)
+
+    now = datetime.datetime.now(tz=datetime.timezone.utc).replace(microsecond=0)
+    after_dt = now - past
+
+    after_iso = after_dt.isoformat() + "Z"
+
+    paid_orders = get_paid_orders_after(wc_client, after_iso)
+
+    filtered = [order for order in paid_orders if order.get("status") == order_status.value]
+
+    return filtered
 
 
 def check_number_of_line_items(order: dict, expected_count: int = 1) -> bool:
