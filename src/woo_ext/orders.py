@@ -1,3 +1,5 @@
+import math
+
 from woocommerce import API
 
 from woo_ext.data_models import WooOrderStatus
@@ -19,18 +21,42 @@ def set_order_status(wc_client: API, order_id: int, new_status: WooOrderStatus) 
     response.raise_for_status()
 
 
-def get_orders_by_status(wc_client: API, order_status: WooOrderStatus) -> list[dict]:
+def get_orders_by_status(wc_client: API, order_status: WooOrderStatus, past_x_orders: int = 1000) -> list[dict]:
     """View all the orders with a specific status
+
+    only goes a certain amount of orders into the past because of woo's pagination
 
     :param wc_client: initialized woocommerce API
     :param order_status: status of the orders to be fetched, see WooOrderStatus for possible values
+    :param past_x_orders: number of orders to fetch from the past,
+                          will be rounded up to the next 100,
+                          defaults to 1000,
+                          if <0, all orders will be fetched
     """
     if not order_status:
         msg = "To get the orders by status, 'order_status' must have a valid value"
         raise ValueError(msg)
 
-    filtered_orders = get_orders_from_all_pages(wc_client, filter_str=f"&status={order_status.value}")
-    return filtered_orders
+    if past_x_orders >= 0:
+        no_pages = math.ceil(past_x_orders / 100)
+    else:
+        no_pages = None
+    orders = []
+    page_number = 1
+
+    while True:
+        order_batch = wc_client.get(
+            "orders", params={"status": order_status.value, "per_page": 100, "page": page_number}
+        ).json()
+        orders.extend(order_batch)
+        if no_pages is not None:
+            if page_number == no_pages:
+                break
+        elif not order_batch:
+            break
+        page_number += 1
+
+    return orders
 
 
 def check_number_of_line_items(order: dict, expected_count: int = 1) -> bool:
@@ -101,8 +127,9 @@ def get_customer_mails(wc_client) -> list[str]:
 
 
 def get_orders_from_all_pages(wc_client, filter_str: str = "") -> list[dict]:
-    """Given a filter string, all orders from all pages are fetched
-    docs: https://woocommerce.github.io/woocommerce-rest-api-docs/?python#list-all-orders
+    """Given a filter string, all orders from all pages are fetched,
+    until a page given the filter string returns an empty list.
+    docs: https://developer.woocommerce.com/docs/apis/rest-api/v3/orders/#list-all-orders
 
     :param filter: given filter, various filters have to be separated by '&', must start with an '&', defaults to empty
     """
