@@ -62,3 +62,10 @@ class WooOrderCondensed(BaseModel):
 
 class WooOrderPseudonomyzed(BaseModel):
     order_id: int
+
+
+class WooCustomer(BaseModel):
+    id: int
+    email: str
+    first_name: str | None
+    last_name: str | None

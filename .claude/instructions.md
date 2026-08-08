@@ -7,7 +7,7 @@
 ## Tech Stack
 
 - **Language**: Python 3.10+ (supports 3.10, 3.11, 3.12, 3.13)
-- **Key Dependencies**: 
+- **Key Dependencies**:
   - Pydantic >= 2.12.5 (data validation)
   - tenacity >= 9.1 (retry logic)
   - woocommerce >= 3.0.0 (WooCommerce client)
@@ -35,6 +35,7 @@ woo-ext/
 - **Formatting & Linting**: Ruff (strict rules configured in pyproject.toml)
 - **Type Checking**: mypy with strict settings
 - **Line Length**: 120 characters
+- **Line Endings**: **LF only** (Unix-style, not CRLF). Pre-commit hooks automatically enforce this via `remove-crlf`
 - **Imports**: Absolute imports enforced, organized with isort
 - **Testing**: pytest with coverage tracking
 - **Pre-commit**: Hooks configured in `.pre-commit-config.yaml`
@@ -69,6 +70,10 @@ hatch run types:check             # Run mypy
 1. **Pydantic Models**: All data structures inherit from `BaseModel` with field validators
 2. **Enums**: Use for fixed status values (e.g., `WooOrderStatus`)
 3. **Type Hints**: Always use full type annotations; mypy is strict
+   - Use **PEP 604 union syntax** (`X | Y`) for optional/union types, not `Optional[X]` or `Union[X, Y]`
+   - Example: `def get_customer(...) -> WooCustomer | None:` (not `Optional[WooCustomer]`)
+   - This applies to all type hints in the codebase
+   - Ruff's UP rule automatically detects and fixes legacy typing imports
 4. **Error Handling**: Use tenacity for retries in API calls
 5. **Metadata**: WooCommerce metadata must be JSON-serializable (validated in models)
 
@@ -80,6 +85,20 @@ hatch run types:check             # Run mypy
 - Update type hints comprehensively
 - Maintain 100% type coverage where possible
 - Keep docstrings for public APIs
+
+## Git Configuration
+
+To ensure proper line ending handling across all platforms:
+
+```bash
+# Set git to auto-convert on commit (recommended for Windows users)
+git config core.autocrlf input
+```
+
+This ensures:
+- Git stores files with LF in the repository (consistent across platforms)
+- Pre-commit hooks automatically convert any CRLF to LF before commit
+- Your text editor should be configured to use LF (not CRLF)
 
 ## CI/CD
 
