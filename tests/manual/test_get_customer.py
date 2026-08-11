@@ -78,6 +78,10 @@ def main() -> None:
         print(f"Error: Failed to fetch customer: {e}", file=sys.stderr)
         sys.exit(1)
 
+    if customer is None:
+        print(f"Error: No customer found with ID: {customer_id}", file=sys.stderr)
+        sys.exit(1)
+
     # Print customer object
     print("=" * 60)
     print("WooCustomer Object:")
